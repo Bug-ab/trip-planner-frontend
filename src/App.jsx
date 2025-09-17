@@ -1,5 +1,5 @@
 // src/App.jsx
-import TripPlanner from "./TripPlanner";
+import TripPlanner from "./TripPlanner.jsx";
 
 function App() {
   return (
@@ -10,4 +10,3 @@ function App() {
 }
 
 export default App;
-
