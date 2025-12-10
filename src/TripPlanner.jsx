@@ -8,72 +8,56 @@ export default function TripPlanner() {
   const [itinerary, setItinerary] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isCamping, setIsCamping] = useState(false); // ⬅️ new
 
-  // ✅ Works with both Vite (VITE_API_URL) and CRA (REACT_APP_BACKEND_URL)
+  // Uses Vercel env var if present, otherwise falls back to Render
   const API_URL =
-    import.meta.env.VITE_API_URL ||
-    process.env.REACT_APP_BACKEND_URL ||
-    "http://localhost:3000";
+    (import.meta.env?.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) ||
+    "https://trip-planner-backend-6wni.onrender.com";
 
-  console.log("🌍 Using API_URL:", API_URL);
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
     setItinerary("");
 
     try {
-      const response = await fetch(`${API_URL}/api/plan`, {
+      const resp = await fetch(`${API_URL}/api/plan`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           destination,
           start_date: startDate,
-          days,
+          days: Number(days),
           experience: level,
+          camping: isCamping, // ⬅️ send choice to backend
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch itinerary");
-      }
-
-      const data = await response.json();
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
       setItinerary(data.plan || "No itinerary generated.");
     } catch (err) {
-      setError("Error generating itinerary. Please try again.");
       console.error(err);
+      setError("Error generating itinerary. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
       <h1 style={{ textAlign: "center" }}>✨ Trip Planner</h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
-          marginBottom: "20px",
-        }}
-      >
+
+      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14, marginBottom: 18 }}>
         <input
           type="text"
-          placeholder="Destination"
+          placeholder="Destination (e.g., Yoho, Banff)"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
           required
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
+          aria-label="Destination"
+          style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
         />
 
         <input
@@ -81,40 +65,42 @@ export default function TripPlanner() {
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           required
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
+          aria-label="Start date"
+          style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
         />
 
         <input
           type="number"
-          value={days}
           min="1"
           max="30"
+          value={days}
           onChange={(e) => setDays(e.target.value)}
           required
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
+          aria-label="Number of days"
+          style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
         />
 
         <select
           value={level}
           onChange={(e) => setLevel(e.target.value)}
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
+          aria-label="Experience level"
+          style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
         >
           <option>Beginner</option>
           <option>Intermediate</option>
           <option>Advanced</option>
         </select>
+
+        {/* Camping toggle */}
+        <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <input
+            type="checkbox"
+            checked={isCamping}
+            onChange={(e) => setIsCamping(e.target.checked)}
+            aria-label="Include camping"
+          />
+          Include camping (campsites, permits, gear)
+        </label>
 
         <button
           type="submit"
@@ -122,10 +108,11 @@ export default function TripPlanner() {
           style={{
             padding: "12px",
             background: "#007bff",
-            color: "white",
+            color: "#fff",
             border: "none",
-            borderRadius: "6px",
+            borderRadius: 6,
             cursor: "pointer",
+            fontWeight: 700,
           }}
         >
           {loading ? "Generating..." : "🚀 Generate Itinerary"}
@@ -137,16 +124,16 @@ export default function TripPlanner() {
       <div
         style={{
           border: "1px solid #ccc",
-          borderRadius: "8px",
-          padding: "20px",
+          borderRadius: 8,
+          padding: 20,
           background: "#f9f9f9",
-          minHeight: "150px",
+          minHeight: 150,
         }}
       >
         {itinerary ? (
-          <pre style={{ whiteSpace: "pre-wrap" }}>{itinerary}</pre>
+          <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>{itinerary}</pre>
         ) : (
-          <p style={{ color: "#777", textAlign: "center" }}>
+          <p style={{ color: "#777", textAlign: "center", margin: 0 }}>
             Your itinerary will appear here ✨
           </p>
         )}
